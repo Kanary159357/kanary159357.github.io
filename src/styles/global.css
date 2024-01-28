@@ -1,3 +1,7 @@
-.time-line-container>div:last-child .education__time>.education__line {
-    display: none;
+@import "./base.css";
+@import "./shiki.css";
+@import "./shaku.css";
+
+.time-line-container > div:last-child .education__time > .education__line {
+  display: none;
 }
