@@ -8,43 +8,79 @@ pubDate: "Dec 12 2023"
 
 ## useRef's types
 
-When you look at React useRef's type definition, you could notice that there are several function overriding for useRef.
+When examining the type definition of React's useRef, you may notice several function overloads for useRef.
 
 [Look at @types/react](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/0928217380812c4b25ee324405e347fb6506eaa1/types/react/index.d.ts#L1067)
 
-```
+```typescript
 function useRef<T>(initialValue: T): MutableRefObject<T>;
 function useRef<T>(initialValue: T | null): RefObject<T>;
 function useRef<T = undefined>(): MutableRefObject<T | undefined>;
 ```
 
-First one is quite obvious. The type is set as initial value.
+The first one is quite straightforward: the type is set as the initial value.
 
-But why there are below 2 types?
+But why are the following two types present?
 
-```
+```typescript
 function useRef<T>(initialValue: T | null): RefObject<T>;
 function useRef<T = undefined>(): MutableRefObject<T | undefined>;
 ```
 
-Why there `function useRef<T>(initialValue: T | null): RefObject<T>` is `RefObject` and `function useRef<T = undefined>(): MutableRefObject<T | undefined>` is `MutableRefObject`?
-
-Let' see what is `RefObject` and `MutableRefObject` first.
+Let's understand what RefObject and MutableRefObject are.
 
 ## `RefObject`and `MutableRefObject`
 
-```
+```typescript
 interface MutableRefObject<T> {
-    current: T;
+  current: T;
 }
-
 interface RefObject<T> {
-    readonly current: T | null;
+  readonly current: T | null;
 }
 ```
 
-Literally, main difference between `MutableRefObject` and `RefObject` is `readOnly` property. You could not reassign the value to current property.
+`MutableRefObject` is an object with a `current` property of generic type `T`.
 
-Now we knows that `useRef<T>(initialValue: T | null)` return immutable object, and `useRef<T>(initialValue)`
+`RefObject` contains readonly nullable `current` property
 
-It's kind of rule to use `useRef<T>(initialValue: T | null)` for getting DOM Element's value with `ref` property.
+So, we can deduce that:
+
+```typescript
+const refA = useRef<string>(null);
+//    typeof refA = { current: readonly string|null}
+const refB = useRef<string | null>(null);
+//    typeof refB = { current: string| null }
+```
+
+`RefObject` is the return type of createRef (initially), used for handling DOM elements in class components.
+
+[Refer to the old docs for legacy use of createRef](https://ko.legacy.reactjs.org/docs/refs-and-the-dom.html)
+
+Initially, when called, it is null; after being attached to an element, its type becomes that of the attached element, e.g., `<HTMLElement | null>`.
+
+It should not be changed by user after attachment, hence the `readonly` property.
+
+## After introducing Hook API in React 16
+
+With the introduction of the Hook API in React 16, useRef gained more uses than createRef, which was primarily for attaching elements. It is now also used for handling values between re-renders.
+
+![Image showing useRef use cases](/src/content/blog/images/why_use_ref/more_ref.png)
+
+The type definition with `RefObject` might have been designed to retain the createRef type for attaching DOM elements, aiding in migration.
+
+Additional types was for general uses.
+
+# Let's check PR
+
+This is my hypothesis. Now, let's review the PR where the useRef type was first introduced:
+
+[First PR](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/30057)
+
+![Image from the first PR](/src/content/blog/images/why_use_ref/first_pr.png)
+
+We can observe that useRef<T>(initialValue: T | null) was introduced to handle ref in React.
+
+In the first PR introducing useRef, there were no types for function useRef<T = undefined>(): MutableRefObject<T | undefined>;.
+
+This type was introduced in a later [PR](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/33220), which added support for cases using undefined in useState, useRef, useMemo.
