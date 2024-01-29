@@ -65,7 +65,7 @@ It should not be changed by user after attachment, hence the `readonly` property
 
 With the introduction of the Hook API in React 16, useRef gained more uses than createRef, which was primarily for attaching elements. It is now also used for handling values between re-renders.
 
-![Image showing useRef use cases](/src/content/blog/images/why_use_ref/more_ref.png)
+![Image showing useRef use cases](../blog/images/why_use_ref/more_ref.png)
 
 The type definition with `RefObject` might have been designed to retain the createRef type for attaching DOM elements, aiding in migration.
 
@@ -77,7 +77,7 @@ This is my hypothesis. Now, let's review the PR where the useRef type was first 
 
 [First PR](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/30057)
 
-![Image from the first PR](/src/content/blog/images/why_use_ref/first_pr.png)
+![Image from the first PR](../blog/images/why_use_ref/first_pr.png)
 
 We can observe that useRef<T>(initialValue: T | null) was introduced to handle ref in React.
 
