@@ -213,8 +213,8 @@ const A= () => {
 export default A;
 ```
 
-위와 같이 `lodash`를 사용하도록 코드를 변경해보자.
-이전의 Pure React Component보단, 이쪽이 더 현실의 React Component스럽다.
+Let's change the code to use `lodash` as shown above.
+This is more like a real React Component than the previous pure React Component.
 
 ![Image showing Barrel file Difference](../blog/images/barrel/sideEffect.png)
 
