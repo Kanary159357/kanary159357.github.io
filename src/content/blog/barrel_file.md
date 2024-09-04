@@ -6,7 +6,7 @@ pubDate: "Aug 18 2024"
 
 ## What is a Barrel File?
 
-```
+```typescript
 
 src/
 	components/
@@ -18,7 +18,7 @@ src/
 
 Consider this folder structure:
 
-```
+```typescript
 import Button from './components/Button';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -26,7 +26,7 @@ import Footer from './components/Footer';
 
 In a typical structure, you would import all these components like this:
 
-```
+```typescript
 // src/components/index.js
 export { default as Button } from './Button';
 export { default as Header } from './Header';
@@ -35,7 +35,7 @@ export { default as Footer } from './Footer';
 
 By grouping these imports using a barrel file like the one above, you can simply import from `index.js` like this:
 
-```
+```typescript
 `import { Button, Header, Footer } from './components';`
 ```
 
@@ -44,35 +44,35 @@ By using a barrel file:
 1. **Readability improves.** Barrel files simplify import statements, making the code cleaner.
 2. **Maintainability improves.** Managing multiple modules in a single file means you only need to modify the barrel file if modules are added or changed (encapsulation).
 
-## However
+### However
 
 However, a barrel file is simply a re-exporting file, so each time the entire module map is drawn, an unnecessary file is loaded, causing additional time to be spent.
 
 Moreover, in a feature-based folder structure, multiple re-exports might occur to show lower-level variables through feature-level imports.
 
-```
+```typescript
 // src/features/Novels/HarryPotter/someFunctionGroup/someFunction
 export function someFunction(){
 
 }
 ```
 
-```
+```typescript
 // src/features/Novels/HarryPotter/someFunctionGroup/index.js
 export * from './someFunction'
 ```
 
-```
+```typescript
 // src/features/Novels/HarryPotter/index.js
 export * from './someFunctionGroup'
 ```
 
-```
+```typescript
 // src/features/Novels/index.js
 export * from './HarryPotter'
 ```
 
-```
+```typescript
 // src/pages/somePage
 import {someFunction} from 'Features/HarryPotter'
 ```
@@ -85,17 +85,17 @@ In reality, even if you use barrel files to block content in JS, it is impossibl
 
 So while the conceptual separation using a barrel file is meaningful, complete abstraction is difficult. Also, the argument for using barrel files purely for the readability of import statements is less convincing in modern development environments where imports are often handled automatically.
 
-# No Barrel Files
+## No Barrel Files
 
 Recently, some argue that JS barrel files slow down builds and should be removed, with related work being done for performance improvements.
 
 Marvinh tested this through module load time benchmarks and argued that using barrel files is an expensive task and should not be done recklessly. However, the overhead time presented by the number of modules did not resonate intuitively. I was curious how much performance actually differs without using barrel files and importing directly.
 
-## How much difference in build time?
+### How much difference in build time?
 
 The structure tested is as follows:
 
-```
+```typescript
 // ./components/index.ts
 export * from "./1";
 
@@ -118,7 +118,7 @@ export { default as D1 } from "./D1";
 export { default as E1 } from "./E1";
 ```
 
-```
+```typescript
 // ./components/1/index.ts
 export { default as A11 } from './A11';
 
@@ -143,7 +143,7 @@ export * from './5';
 
 This recursive structure was created to dramatically demonstrate the speed degradation caused by module loading due to barrel files. The components themselves are very simple:
 
-```
+```typescript
 // ./components/1/A.tsx
 const A = () => {
 return <div>A Component</div>;
@@ -156,7 +156,7 @@ If there are 5 layers:
 6(index.ts + A.tsx + B.tsx ..... + E.tsx) \* (5^0 + 5^1 + 5^2 + 5^3 + 5^4)
 You would have a total of 4686 modules.
 
-## Build Results
+### Build Results
 
 ![Image showing Barrel file Difference](../blog/images/barrel/barrel.png)
 The following image shows the benchmark results with and without barrel files. The left orange bar (non-barrel) shows significantly faster results compared to the right dark orange bar (barrel).
@@ -177,11 +177,11 @@ In jest, there is a performance difference of almost 2x, even with the cache opt
 
 Webpack assumes that all files have side effects when bundling. The side effect refers to any impact that a function has besides returning a value, such as modifying a global variable.
 
-## What Are Side Effects?
+### What Are Side Effects?
 
 Side effects refer to any additional impact that occurs when code is executed, beyond just the return value of a function. This can include modifying external states, interacting with external systems, or producing output, among other things. In programming, side effects often involve changes to variables, data structures, files, or other parts of the program's environment that exist outside the scope of the function being executed.
 
-```
+```typescript
 // fileToBeImported.js
 export const value = 42;
 
@@ -192,16 +192,7 @@ Code like the one above initializes a global variable, which can cause unintende
 
 By marking folders as side-effect free in `package.json` with the `sideEffects` option, you can improve tree-shaking, but it won't significantly improve build speed since the module map still needs to be traversed.
 
-## What if each component has external dependencies?
-
-\
-![[output (2).png]]
-
-By marking folders as side-effect free in `package.json` with the `sideEffects` option, you can improve tree-shaking, but it won't significantly improve build speed since the module map still needs to be traversed.
-
-## What if each component has external dependencies?
-
-```
+```typescript
 // ./components/1/A.tsx
 import _ from "lodash";
 
@@ -232,7 +223,7 @@ In such cases, using `sideEffects: false` helps. Although you’re importing thr
 
 If you switch from Terser to the SWC Minifier, it doesn’t take as long as 70 seconds. However, it’s still not as fast as when you avoid using barrel files altogether!
 
-## Next optimizePackageImports
+### Next optimizePackageImports
 
 https://vercel.com/blog/how-we-optimized-package-imports-in-next-js
 
@@ -246,18 +237,18 @@ Even for libraries that have `sideEffect: false` specified, tree-shaking works c
 
 To tackle this, Next.js employs the `next-barrel-loader` Webpack plugin, which transforms barrel file imports to retain only the necessary exports from the barrel file. The process involves creating an export map like the one shown below:
 
-```
+```typescript
 export const __next_private_export_map__ = '[["a","./a","a"],["b","./b","b"],["c","./c","c"],...]'
 ```
 
 This JSON-formatted export map is generated by SWC, where each array element represents:
 
-```
+```typescript
  ["<imported identifier>", "<import path>", "<exported name>"]
  e.g.: import { a as b } from './module-a' => '["b", "./module-a", "a"]'
 ```
 
-```
+```typescript
   const exportMap = new Map<string, [string, string]>()
   for (const [name, path, orig] of exportList) {
     exportMap.set(name, [path, orig])
@@ -266,7 +257,7 @@ This JSON-formatted export map is generated by SWC, where each array element rep
 
 Next, the export map is created from the JSON:
 
-```
+```typescript
 for (const name of names) {
   if (exportMap.has(name)) {
     const decl = exportMap.get(name)!
@@ -297,7 +288,7 @@ for (const name of names) {
 
 If a wildcard import is used and the `name` is not in the exportMap, the plugin handles this by specifying it and recursively resolving the issue:
 
-```
+```typescript
 if (missedNames.length > 0) {
 for (const match of wildcardExports) {
   const path = match[1]
@@ -317,6 +308,6 @@ Since code in external libraries is beyond our control, this approach is necessa
 
 Using barrel files can indeed slow down your build process. Barrel files pose a significant risk of reducing build performance, especially if misused, so caution is warranted.
 
-###### Opinion
+### Opinion
 
 Given that your team likely has established workflows, I wouldn't say "DO NOT USE BARREL FILES RIGHT NOW!" too strongly. However, if you’re creating barrel files for every folder without a clear need, it’s worth reconsidering this practice.
